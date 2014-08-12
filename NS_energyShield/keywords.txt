@@ -1,0 +1,7 @@
+NS_energyShield	KEYWORD1
+voltage	KEYWORD2
+Vadp	KEYWORD2
+current	KEYWORD2
+temperature	KEYWORD2
+charge	KEYWORD2
+percent	KEYWORD2
