@@ -82,7 +82,7 @@ void TTE()
   Currents[0] = -latestCurrent;
 
   // Calculate AvgCurrent
-  for (int i=0; i < CURRENTS_LEN; ++i) AvgCurrent += Current[i];
+  for (int i=0; i < CURRENTS_LEN; ++i) AvgCurrent += Currents[i];
   AvgCurrent /= CURRENTS_LEN;
 
   // Minutes until empty
