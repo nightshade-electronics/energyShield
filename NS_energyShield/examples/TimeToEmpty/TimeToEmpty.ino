@@ -24,6 +24,7 @@ long lastTime;
 unsigned long TimeToEmpty;
 int Currents[CURRENTS_LEN];
 boolean charging;
+int latestPercent;
 
 void setup()
 {
@@ -35,6 +36,7 @@ void setup()
   for (int i=1; i < CURRENTS_LEN; ++i) Currents[i] = Currents[i-1];
 
   lastTime = millis(); 
+  latestPercent = eS.percent();
 }
 
 void loop()
@@ -56,9 +58,10 @@ void loop()
       Serial.print(TimeToEmpty/60); // Hours
       Serial.print(" hr ");
       Serial.print(TimeToEmpty%60); // Minutes
-      Serial.println(" min");
+      Serial.print(" min");
     }
-    else Serial.println("Charging!");
+    else Serial.print("Charging!");
+    Serial.print(" ("); Serial.print(latestPercent); Serial.println(" %)");
 
     delay(1); // Ensure that a ms passes, so it does not double print
   }
@@ -68,6 +71,9 @@ void TTE()
 {
   const int latestCurrent = eS.current();
   int AvgCurrent = 0;
+
+  // Update global
+  latestPercent = eS.percent();
 
   // Update charging state
   charging = (latestCurrent > 0);
@@ -86,5 +92,5 @@ void TTE()
   AvgCurrent /= CURRENTS_LEN;
 
   // Minutes until empty
-  TimeToEmpty = (unsigned long) BATTERY_CAPACITY*eS.percent()*60/AvgCurrent/200;
+  TimeToEmpty = (unsigned long) BATTERY_CAPACITY*latestPercent*60/AvgCurrent/200;
 }
