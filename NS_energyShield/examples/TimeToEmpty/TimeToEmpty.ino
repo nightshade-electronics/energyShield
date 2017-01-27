@@ -15,25 +15,42 @@
 #include <Wire.h>
 
 #define BATTERY_CAPACITY 1200 // mAh
+#define CURRENTS_LEN 10 // array size
 
 NS_energyShield eS; // Create NS-energyShield object called "eS"
 
 // Global variables
-long lastTime = millis(); 
+long lastTime;
 unsigned long TimeToEmpty;
-int Current[10], AvgCurrent;
+int Currents[CURRENTS_LEN];
 boolean charging;
+int latestPercent;
 
 void setup()
 {
   Serial.begin(9600);
+
+  // Initialize Currents array with initial value
+  const int latestCurrent = eS.current();
+  Currents[0] = (latestCurrent < 0) ? -latestCurrent : 0;
+  for (int i=1; i < CURRENTS_LEN; ++i) Currents[i] = Currents[i-1];
+
+  lastTime = millis(); 
+  latestPercent = eS.percent();
 }
 
 void loop()
 {
-  if (millis() > lastTime + 100) TTE(); // Run TTE every 100 ms
+  const unsigned long ts = millis();
 
-  if (millis()%5000 == 0) // Print results every 5 seconds
+  // Note: if lastTime < ts this means it wrapped, and
+  //       in such case, we treat it as if 100ms went by
+  if (ts > lastTime + 100 || lastTime < ts) {
+    TTE(); // Run TTE every 100 ms
+    lastTime = ts;
+  }
+
+  if (ts%5000 == 0) // Print results every 5 seconds
   {
     if (!charging) 
     {
@@ -41,9 +58,10 @@ void loop()
       Serial.print(TimeToEmpty/60); // Hours
       Serial.print(" hr ");
       Serial.print(TimeToEmpty%60); // Minutes
-      Serial.println(" min");
+      Serial.print(" min");
     }
     else Serial.print("Charging!");
+    Serial.print(" ("); Serial.print(latestPercent); Serial.println(" %)");
 
     delay(1); // Ensure that a ms passes, so it does not double print
   }
@@ -51,29 +69,28 @@ void loop()
 
 void TTE()
 {
-  for(int i=9;i>0;i--) Current[i] = Current [i-1];
-  Current[0] = eS.current();
+  const int latestCurrent = eS.current();
+  int AvgCurrent = 0;
 
-  for (int i=9;i>=0;i--)
-  {
-    if (Current[i] < 0)
-    {
-      Current[i] = -Current[i];
-      charging = 0;
-    }
-    else
-    {
-      charging = 1;
-    }
-  }
+  // Update global
+  latestPercent = eS.percent();
 
-  // Check that energyShield is not charging
-  for(int i=0;i<10;i++) AvgCurrent += Current[i];
-  AvgCurrent /= 10;
+  // Update charging state
+  charging = (latestCurrent > 0);
 
-  TimeToEmpty = (unsigned long) BATTERY_CAPACITY*eS.percent()*60/AvgCurrent/200; // Minutes until empty
+  // If we are currently charging or not drawing any
+  // current, then there is nothing to do in regards to
+  // TimeToEmpty calculation
+  if (charging || latestCurrent == 0) return;
 
-  lastTime = millis();
+  // Shift Currents array by 1 and add new current value to index 0
+  for (int i=1; i < CURRENTS_LEN; ++i) Currents[i] = Currents[i-1];
+  Currents[0] = -latestCurrent;
+
+  // Calculate AvgCurrent
+  for (int i=0; i < CURRENTS_LEN; ++i) AvgCurrent += Currents[i];
+  AvgCurrent /= CURRENTS_LEN;
+
+  // Minutes until empty
+  TimeToEmpty = (unsigned long) BATTERY_CAPACITY*latestPercent*60/AvgCurrent/200;
 }
-
-
