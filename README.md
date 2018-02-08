@@ -1,9 +1,11 @@
 energyShield (Original) Library 
 ============
 
-NOTE: This library is for the origninal energyShield (obsolete), not the energyShield 2. Find the energyShield 2 library here: https://github.com/nightshade-electronics/energyShield2
+### NOTE: This library is for the origninal energyShield (obsolete), not the energyShield 2. 
 
-Buy the NEW energyShield 2 here: https://ns-electric.com/product/energyshield-2/
+**Find the energyShield 2 library here: https://github.com/nightshade-electronics/energyShield2**
+
+**Buy the NEW energyShield 2 here: https://ns-electric.com/product/energyshield-2/**
 
 This is the Arduino library for the original energyShield. It allows Arduino users to easily access some of the energyShield's fuel
 gauge functionality. It uses the Arduino Wire Library to communicate the the fuel gauge and the caculates current battery information.
